@@ -1,0 +1,238 @@
+/*
+ * Pamaldeep Singh Dhillon
+ * SnapShopGUI.java
+ * 
+ * TCSS 305 - Autumn 2015
+ * Assignment 4 - SnapShop
+ */
+
+package gui;
+
+import filters.EdgeDetectFilter;
+import filters.EdgeHighlightFilter;
+import filters.FlipHorizontalFilter;
+import filters.FlipVerticalFilter;
+import filters.GrayscaleFilter;
+import filters.SharpenFilter;
+import filters.SoftenFilter;
+
+import image.PixelImage;
+
+import java.awt.BorderLayout;
+//import java.awt.Component;
+//import java.awt.Dimension;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+
+import java.io.File;
+import java.io.IOException;
+
+import javax.swing.ImageIcon;
+import javax.swing.JButton;
+import javax.swing.JFileChooser;
+import javax.swing.JFrame;
+import javax.swing.JLabel;
+import javax.swing.JOptionPane;
+import javax.swing.JPanel;
+import javax.swing.filechooser.FileNameExtensionFilter;
+
+/**
+ * SnapShop GUI which opens and filters images based on user input.
+ * 
+ * @author Pamaldeep Dhillon
+ * @version 03 November 2015
+ */
+public class SnapShopGUI {
+    /** Number of buttons for file operations (Open, Save, Close Image).*/
+    private static final int NUM_OF_FILE_BUTTONS = 3;
+    /** Number of buttons for filters.*/
+    private static final int NUM_OF_EDIT_BUTTONS = 7;
+    /** True if an image file is open, false otherwise.*/
+    private boolean myImageOpen;
+    /** Filter for files, so only image files appear.*/
+    private final FileNameExtensionFilter myFilter;
+    /** Array of filter buttons.*/
+    private JButton[] myEditButtons;
+    /** Array of file operation buttons.*/
+    private JButton[] myFileButtons;
+    /** The frame for this application's GUI.*/
+    private final JFrame myFrame;
+    /** The label containing the image that is opened by the user.*/
+    private final JLabel myImageLabel;
+    /** The image user opens for editing.*/
+    private PixelImage myImage;
+    /** Array of strings with names for the edit buttons.*/
+    private final String[] myEditButtonStrings;
+    /** Array of strings with names for the file buttons.*/
+    private final String[] myFileButtonStrings;
+    
+    /**
+     * Constructor to initialize fields.
+     */
+    public SnapShopGUI() {
+        myFrame = new JFrame();
+        myImageLabel = new JLabel();
+        myEditButtonStrings = new String[] {"Edge Detect", "Edge Highlight", "Flip Horizontal",
+                                            "Flip Vertical", "Grayscale", "Sharpen", "Soften"};
+        myFileButtonStrings = new String[] {"Open...", "Save As...", "Close Image"};
+        myEditButtons = new JButton[NUM_OF_EDIT_BUTTONS];
+        myFileButtons = new JButton[NUM_OF_FILE_BUTTONS];
+        myImageOpen = false;
+        myFilter = new FileNameExtensionFilter("Image Files", "jpg", "png", "gif", "jpeg");
+    }
+         
+    /**
+     * Sets up and displays the GUI for this application.
+     */
+    public void start() {
+        myFrame.setTitle("TCSS 305 SnapShop");
+        myFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        
+        final JPanel panel1 = new JPanel();
+        for (int i = 0; i < myEditButtons.length; i++) {
+            myEditButtons[i] = createButton(myEditButtonStrings[i]);
+        }
+        for (final JButton b : myEditButtons) {
+            panel1.add(b);
+        }        
+        myFrame.add(panel1, BorderLayout.NORTH);
+        
+        final JPanel panel2 = new JPanel();
+        for (int i = 0; i < myFileButtons.length; i++) {
+            myFileButtons[i] = createButton(myFileButtonStrings[i]);
+        }
+        for (final JButton b : myFileButtons) {
+            panel2.add(b);
+        }
+        myFrame.add(panel2, BorderLayout.SOUTH);
+        
+        myFrame.pack();
+        myFrame.setVisible(true);
+    }
+    
+    /**
+     * Creates and returns a button with the name provided. Also contains the ActionListener
+     * class that handles ActionEvents for buttons.
+     * 
+     * @param theString Name of the button.
+     * @return button Created button for the GUI.
+     */
+    private JButton createButton(final String theString) {
+        final JFileChooser fileChooser = new JFileChooser();
+        fileChooser.setFileFilter(myFilter);
+        final JButton button = new JButton(theString);
+        /** Inner class: ActionListener for Buttons.*/
+        class MyActionListener implements ActionListener {
+            @Override
+            public void actionPerformed(final ActionEvent theEvent) {
+                if (theEvent.getSource() == myFileButtons[0]) {
+                    openButton(fileChooser);
+                    if (myImageOpen) {
+                        for (final JButton b : myEditButtons) {
+                            b.setEnabled(true);
+                        }
+                        for (final JButton b : myFileButtons) {
+                            b.setEnabled(true);
+                        }
+                    }
+                } else if (theEvent.getSource() == myFileButtons[1]) {
+                    saveButton(fileChooser);
+                } else if (theEvent.getSource() == myFileButtons[2]) {
+                    myImageLabel.setIcon(null);
+                    myFrame.setMinimumSize(null);
+                    myFrame.pack();
+                    myImageOpen = false;
+                    for (final JButton b : myEditButtons) {
+                        b.setEnabled(false);
+                    }
+                    for (final JButton b : myFileButtons) {
+                        if (!b.getActionCommand().equals(myFileButtonStrings[0])) {
+                            b.setEnabled(false);
+                        }
+                    }
+                } else {
+                    filterButtons(theEvent);
+                }
+            }
+        }
+        if (!button.getActionCommand().equals(myFileButtonStrings[0])) {
+            button.setEnabled(false);
+        }
+        button.addActionListener(new MyActionListener());
+        return button;
+    }
+    
+    /**
+     * Handles the JFileChooser for whenever the open button is clicked. Opens an open dialog
+     * and opens the file if it is an image.
+     * 
+     * @param theChooser JFileChooser that will be used to open the image.
+     * @throws IOException if file is not an image file.
+     */
+    private void openButton(final JFileChooser theChooser) {
+        final int result = theChooser.showOpenDialog(null);
+        if (result == JFileChooser.APPROVE_OPTION) {
+            try {
+                myImage = PixelImage.load(theChooser.getSelectedFile());
+                myImageLabel.setIcon(new ImageIcon(myImage));
+                myImageLabel.setHorizontalAlignment(0);
+                myFrame.add(myImageLabel, BorderLayout.CENTER);
+                myFrame.setMinimumSize(null);
+                myFrame.pack();
+                myFrame.setMinimumSize(myFrame.getSize());
+                myImageOpen = true;
+            } catch (final IOException e) {
+                JOptionPane.showMessageDialog(null, "The selected file did not contain an " 
+                                            + "image!", "Error!", JOptionPane.ERROR_MESSAGE);
+            }
+        } else if (result == JFileChooser.CANCEL_OPTION) {
+            return;
+        }
+    }
+    
+    /**
+     * Handles the JFileChooser for whenever the save as button is clicked. Opens a save
+     * dialog and saves the image.
+     * 
+     * @param theChooser JFileChooser that will be used to save the image.
+     * @throws IOException if the file can not be saved.
+     */
+    private void saveButton(final JFileChooser theChooser) {
+        final int result = theChooser.showSaveDialog(myFrame);
+        if (result == JFileChooser.APPROVE_OPTION) {
+            final File saveFile = theChooser.getSelectedFile();
+            try {
+                myImage.save(saveFile);
+            } catch (final IOException e) {
+                JOptionPane.showMessageDialog(null, "Couldn't save image!", "Save Failed!",
+                                              JOptionPane.ERROR_MESSAGE);
+            }
+        } else if (result == JFileChooser.CANCEL_OPTION) {
+            return;
+        }
+    }
+    
+    /**
+     * Handles the filter buttons for the ActionListener.
+     * 
+     * @param theEvent ActionEvent from the ActionListener for the button that is clicked.
+     */
+    private void filterButtons(final ActionEvent theEvent) {
+        if (theEvent.getSource() == myEditButtons[0]) {
+            new EdgeDetectFilter().filter(myImage);
+        } else if (theEvent.getSource() == myEditButtons[1]) {
+            new EdgeHighlightFilter().filter(myImage);
+        } else if (theEvent.getSource() == myEditButtons[2]) {
+            new FlipHorizontalFilter().filter(myImage);
+        } else if (theEvent.getSource() == myEditButtons[3]) {
+            new FlipVerticalFilter().filter(myImage);
+        } else if (theEvent.getSource() == myEditButtons[4]) {
+            new GrayscaleFilter().filter(myImage);
+        } else if (theEvent.getSource() == myEditButtons[5]) {
+            new SharpenFilter().filter(myImage);
+        } else if (theEvent.getSource() == myEditButtons[6]) {
+            new SoftenFilter().filter(myImage);
+        }
+        myImageLabel.setIcon(new ImageIcon(myImage));
+    }
+}

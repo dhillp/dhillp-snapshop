@@ -1,0 +1,172 @@
+// finish (and comment) me!
+
+package gui;
+
+import filters.*;
+
+import image.PixelImage;
+
+import java.awt.BorderLayout;
+import java.awt.Component;
+//import java.awt.Dimension;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+
+import java.io.File;
+import java.io.IOException;
+
+import javax.swing.ImageIcon;
+import javax.swing.JButton;
+import javax.swing.JFileChooser;
+import javax.swing.JFrame;
+import javax.swing.JLabel;
+import javax.swing.JOptionPane;
+import javax.swing.JPanel;
+
+/**
+ * 
+ * @author Pamaldeep Dhillon
+ * @version 03 November 2015
+ */
+public class SnapShopGUI {
+    
+    private final JFrame myFrame;
+    
+    private final JLabel myImageLabel;
+    
+    private PixelImage myImage;
+    
+    private final String[] myEditButtons;
+    
+    private final String[] myFileButtons;
+    
+    public SnapShopGUI() {
+        super();
+        myFrame = new JFrame();
+        myImageLabel = new JLabel();
+        myEditButtons = new String[] {"Edge Detect", "Edge Highlight", "Flip Horizontal",
+                                      "Flip Vertical", "Grayscale", "Sharpen", "Soften"};
+        myFileButtons = new String[] {"Open...", "Save As...", "Close Image"};
+    }
+         
+    /**
+     * 
+     */
+    public void start() {
+        myFrame.setTitle("TCSS 305 SnapShop");
+        myFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        
+        final JPanel panel1 = new JPanel();
+        for (final String button1 : myEditButtons) {
+            panel1.add(createButton(button1));
+        }
+        
+        myFrame.add(panel1, BorderLayout.NORTH);
+        
+        final JPanel panel2 = new JPanel();
+        for (final String button2 : myFileButtons) {
+            panel2.add(createButton(button2));
+        }
+        myFrame.add(panel2, BorderLayout.SOUTH);
+        
+        myFrame.pack();
+        myFrame.setVisible(true);
+    }
+    
+    /**
+     * 
+     * @param theString a
+     * @return button
+     */
+    private JButton createButton(final String theString) {
+        final JFileChooser fileChooser = new JFileChooser();
+        final JButton button = new JButton(theString);
+        /** */
+        class MyActionListener implements ActionListener {
+            @Override
+            public void actionPerformed(final ActionEvent theEvent) {
+                if (theEvent.getActionCommand().equals(myFileButtons[0])) {
+                    openButton(fileChooser);
+                } else if (theEvent.getActionCommand().equals(myFileButtons[1])) {
+                    saveButton(fileChooser);
+                } else if (theEvent.getActionCommand().equals(myFileButtons[2])) {
+                    myImageLabel.setIcon(null);
+                    myFrame.setMinimumSize(null);
+                    myFrame.pack();
+                } else {
+                    filterButtons(theEvent);
+                }
+            }
+        }
+        button.addActionListener(new MyActionListener());
+        return button;
+    }
+    
+    /**
+     * 
+     * @param theChooser a
+     */
+    private void openButton(final JFileChooser theChooser) {
+        final int result = theChooser.showOpenDialog(null);
+        if (result == JFileChooser.APPROVE_OPTION) {
+            try {
+                myImage = PixelImage.load(theChooser.getSelectedFile());
+                myImageLabel.setIcon(new ImageIcon(myImage));
+                myImageLabel.setHorizontalAlignment(0);
+                myFrame.add(myImageLabel, BorderLayout.CENTER);
+                myFrame.setMinimumSize(null);
+                myFrame.pack();
+                myFrame.setMinimumSize(myFrame.getSize());
+            } catch (final IOException e) {
+                JOptionPane.showMessageDialog(null, "The selected file did not contain an " 
+                                            + "image!", "Error!", JOptionPane.ERROR_MESSAGE);
+            }
+        } else if (result == JFileChooser.CANCEL_OPTION) {
+            System.out.println("canceled");
+        }
+    }
+    
+    /**
+     * 
+     * @param theChooser a
+     */
+    private void saveButton(final JFileChooser theChooser) {
+        final int result = theChooser.showSaveDialog(myFrame);
+        if (result == JFileChooser.APPROVE_OPTION) {
+            final File saveFile = theChooser.getSelectedFile();
+            try {
+                myImage.save(saveFile);
+            } catch (final IOException e) {
+                JOptionPane.showMessageDialog(null, "Couldn't save image!", "Error!",
+                                              JOptionPane.ERROR_MESSAGE);
+            }
+        } else if (result == JFileChooser.CANCEL_OPTION) {
+            System.out.println("canceled");
+        }
+    }
+    
+    private void filterButtons(final ActionEvent theEvent) {
+        if (theEvent.getActionCommand().equals(myEditButtons[0])) {
+            new EdgeDetectFilter().filter(myImage);
+        } else if (theEvent.getActionCommand().equals(myEditButtons[1])) {
+            new EdgeHighlightFilter().filter(myImage);
+//            myImageLabel.setIcon(new ImageIcon(myImage));
+        } else if (theEvent.getActionCommand().equals(myEditButtons[2])) {
+            new FlipHorizontalFilter().filter(myImage);
+//            myImageLabel.setIcon(new ImageIcon(myImage));
+        } else if (theEvent.getActionCommand().equals(myEditButtons[3])) {
+            new FlipVerticalFilter().filter(myImage);
+//            myImageLabel.setIcon(new ImageIcon(myImage));
+        } else if (theEvent.getActionCommand().equals(myEditButtons[4])) {
+            new GrayscaleFilter().filter(myImage);
+//            myImageLabel.setIcon(new ImageIcon(myImage));
+        } else if (theEvent.getActionCommand().equals(myEditButtons[5])) {
+            new SharpenFilter().filter(myImage);
+//            myImageLabel.setIcon(new ImageIcon(myImage));
+        } else if (theEvent.getActionCommand().equals(myEditButtons[6])) {
+            new SoftenFilter().filter(myImage);
+//            myImageLabel.setIcon(new ImageIcon(myImage));
+        }
+        myImageLabel.setIcon(new ImageIcon(myImage));
+    }
+}

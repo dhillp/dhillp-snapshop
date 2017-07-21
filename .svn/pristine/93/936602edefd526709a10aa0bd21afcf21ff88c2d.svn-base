@@ -1,0 +1,31 @@
+// finish (and comment) me!
+
+package gui;
+
+import java.awt.BorderLayout;
+import java.awt.Dimension;
+
+import javax.swing.JButton;
+import javax.swing.JFileChooser;
+import javax.swing.JFrame;
+import javax.swing.JPanel;
+
+/**
+ * 
+ * @author Pamaldeep Dhillon
+ * @version 03 November 2015
+ */
+public class SnapShopGUI {
+         
+    /**
+     * 
+     */
+    public void start() {
+        final JFrame ourFrame = new JFrame();
+        final JFileChooser fileChooser = new JFileChooser();
+        ourFrame.setTitle("TCSS 305 SnapShop");
+        ourFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        ourFrame.setVisible(true);
+//        javax.swing.JOptionPane.showMessageDialog(null, "SnapShop placeholder");
+    }
+}
